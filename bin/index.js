@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import XLSX from "xlsx";
 import fs from "fs";
+import arg from 'arg';
 import createWriter from 'csv-writer';
 function parse(filename) {
  const excelData=XLSX.readFile(filename);
@@ -10,6 +11,28 @@ function parse(filename) {
  }));
 };
 
+function parseArguments(rawArgs)
+{
+    const args=arg(
+        {
+            '-u':Boolean,
+            '-i':Boolean
+
+        },
+        {
+            argv:rawArgs.slice(2),
+        }
+    );
+        return{
+            
+            input:args['-i']||false,
+            update:args['-u']||false,
+            template:args._[0],
+            inputFile:args._[1]
+
+
+        };
+}
 function writeIntoCSVFile(finalResult)
 {
     const createCsvWriter=createWriter.createObjectCsvWriter;
@@ -40,19 +63,24 @@ async function helper(dependency,version)
     }
     return data;
 }
-const argument=process.argv[2];
-if(argument=='-i')
+//parse the arguments
+async function main()
 {
-    const file=process.argv[3];
-    const input=process.argv[4].split("@");
+let options=parseArguments(process.argv);
+console.log(options);
+const argument=process.argv[2];
+if(options.input)
+{
+    const file="./bin/"+options.template+".csv";
+    const input=options.inputFile.split("@");
     const dependency=input[0];
     const version=input[1];
-    console.log("The dependency to be checked is:"+dependency);
-    console.log("The version to be checked is:"+version);
-    if(file=="test")
+    var fileExists=true;
+    //write a function to check if the template is valid
+    if(fileExists)
     {   
             var sheetData=[];
-            parse("./bin/test.csv").forEach((element)=>{                
+            parse(file).forEach((element)=>{                
                 for(var i=0;i<element.data.length;i++)
                 {
                     var name=element.data[i].Name;
@@ -61,7 +89,6 @@ if(argument=='-i')
                 }
             });
             var result=await helper(dependency,version);
-            //merge sheetData and result and write into result.csv
             var finalCSVResult=[];
             for(var i=0;i<sheetData.length;i++)
             {
@@ -74,7 +101,6 @@ if(argument=='-i')
             }
             //console.log(finalCSVResult);
             writeIntoCSVFile(finalCSVResult);
-
     }
     else
     {
@@ -82,8 +108,14 @@ if(argument=='-i')
     }
 
 }
-else
+if(options.update)
 {
-    console.log("No Arguements are passed");
+    console.log("perform the Append Operation for your update pr");
+}
+else if(!options.input && !options.update)
+{
+    console.log("No Arguements are passed.Give Instructions for the arguements");
+}
 }
 
+main();
