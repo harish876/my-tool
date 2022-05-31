@@ -1,0 +1,22 @@
+{
+  "name": "mytool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./bin/index.js",
+  "bin": {
+    "mytool": "./bin/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "arg": "^5.0.1",
+    "axios": "^0.27.2",
+    "inquirer": "^8.2.4",
+    "xlsx": "^0.18.5"
+  }
+}
