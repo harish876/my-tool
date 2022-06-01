@@ -45,11 +45,18 @@ function writeIntoCSVFile(finalResult)
             {id:'versionSatisfied',title:'Version-Satisfied'}
         ]
     });
-    writer.writeRecords(finalResult).then(()=>{console.log("Data Written onto File")});
+    writer.writeRecords(finalResult).then(()=>{console.log("Data Written onto File.Check the result.csv in bin folder.")});
 }
-async function helper(dependency,version)
+async function helper(dependency,version,sheetData)
 {
-    const jsonFiles=["./config/dyte-react-sample-app.json","./config/dyte-js-sample-app.json","./config/dyte-sample-app-backend.json"]
+    var jsonFiles=[];
+    for(var i=0;i<sheetData.length;i++)
+    {
+        var file="./config/"+sheetData[i].name+".json";
+        jsonFiles=[...jsonFiles,file];
+        //console.log(file);
+    }
+    //const jsonFiles=["./config/dyte-react-sample-app.json","./config/dyte-js-sample-app.json","./config/dyte-sample-app-backend.json"]
     var data = [];
     for(var i=0;i<jsonFiles.length;i++)
     {
@@ -57,6 +64,10 @@ async function helper(dependency,version)
         const d=fs.readFileSync(jsonFiles[i],'utf-8');
         const fileData=JSON.parse(d);
         var newData={version:"",versionSatisfied:""};
+        if(fileData.dependencies[dependency]===undefined)
+            {
+                return [];
+            }
         newData.version=fileData.dependencies[dependency].substring(1);
         newData.versionSatisfied=(newData.version>=version)?"true":"false";
         data=[...data,newData]
@@ -67,19 +78,23 @@ async function helper(dependency,version)
 async function main()
 {
 let options=parseArguments(process.argv);
-console.log(options);
-const argument=process.argv[2];
+//console.log(options);
+var dependency="";
+var version="";
+var finalCSVResult=[];
+var updateDir=[];
 if(options.input)
 {
     const file="./bin/"+options.template+".csv";
     const input=options.inputFile.split("@");
-    const dependency=input[0];
-    const version=input[1];
+    dependency=input[0];
+    version=input[1];
     var fileExists=true;
+    var sheetData=[];
     //write a function to check if the template is valid
     if(fileExists)
     {   
-            var sheetData=[];
+           
             parse(file).forEach((element)=>{                
                 for(var i=0;i<element.data.length;i++)
                 {
@@ -88,8 +103,10 @@ if(options.input)
                     sheetData=[...sheetData,{name,repoName}];
                 }
             });
-            var result=await helper(dependency,version);
-            var finalCSVResult=[];
+            var result=await helper(dependency,version,sheetData);
+            //var finalCSVResult=[];
+            if(result.length>0)
+            {
             for(var i=0;i<sheetData.length;i++)
             {
                 finalCSVResult=[...finalCSVResult,{
@@ -101,6 +118,9 @@ if(options.input)
             }
             //console.log(finalCSVResult);
             writeIntoCSVFile(finalCSVResult);
+            }
+            else
+                console.log("Invalid Dependency or Dependency not present in all the files");
     }
     else
     {
@@ -110,7 +130,19 @@ if(options.input)
 }
 if(options.update)
 {
-    console.log("perform the Append Operation for your update pr");
+    for(var i=0;i<finalCSVResult.length;i++)
+    {
+        
+        if(finalCSVResult[i].versionSatisfied=="false")
+        {
+            updateDir=[...updateDir,finalCSVResult[i]];
+            
+        }
+    }
+
+    console.log(updateDir);
+    //so create a pull request on this repo
+    //console.log("perform the Append Operation for your update pr");
 }
 else if(!options.input && !options.update)
 {
