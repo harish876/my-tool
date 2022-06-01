@@ -92,7 +92,7 @@ if(options.input)
     var fileExists=true;
     var sheetData=[];
     //write a function to check if the template is valid
-    if(fileExists)
+    if(fs.existsSync(file))
     {   
            
             parse(file).forEach((element)=>{                
